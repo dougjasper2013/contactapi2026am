@@ -1,0 +1,7 @@
+<?php
+
+    // db credentials
+    
+
+
+?>
