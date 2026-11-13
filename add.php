@@ -28,6 +28,16 @@
         $emailAddress = mysqli_real_escape_string($con, trim($request->data->emailAddress));
         $phoneNumber = mysqli_real_escape_string($con, trim($request->data->phoneNumber));
         $dob = mysqli_real_escape_string($con, trim($request->data->dob));
+        $imageName = mysqli_real_escape_string($con, trim($request->data->imageName));
+
+        // Extract filename
+        $origimg = str_replace('\\', '/', $imageName);
+        $new = basename($origimg);
+        if (empty($new)) {
+            $new = 'placeholder_100.jpg';
+        }
+
+
 
         // Check duplicate email
         $checkEmailSql = "SELECT 1 FROM contacts WHERE emailAddress = '{$emailAddress}'";
@@ -40,8 +50,8 @@
         }
 
         // Insert into database
-        $sql = "INSERT INTO `contacts`(`firstName`, `lastName`, `emailAddress`, `phoneNumber`, `dob`)
-            VALUES('{$firstName}', '{$lastName}', '{$emailAddress}', '{$phoneNumber}', '{$dob}')";
+        $sql = "INSERT INTO `contacts`(`firstName`, `lastName`, `emailAddress`, `phoneNumber`, `dob`, `imageName`)
+            VALUES('{$firstName}', '{$lastName}', '{$emailAddress}', '{$phoneNumber}', '{$dob}', '{$new}')";
 
         if (mysqli_query($con, $sql)) {
             http_response_code(201);
@@ -52,7 +62,8 @@
                     'lastName' => $lastName,
                     'emailAddress' => $emailAddress,
                     'phoneNumber' => $phoneNumber,
-                    'dob' => $dob
+                    'dob' => $dob,
+                    'imageName' => $new
                 ]
             ]);
         }
