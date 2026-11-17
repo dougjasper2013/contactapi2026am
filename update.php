@@ -6,74 +6,51 @@
     ini_set('display_errors', 1);
     error_reporting(E_ALL);
 
-    // Get the posted data
-    $postdata = file_get_contents("php://input");
+    // Parse form data
+    $contactID = isset($_POST['contactID']) ? (int) $_POST['contactID'] : 0;
+    $firstName = mysqli_real_escape_string($con, $_POST['firstName'] ?? '');
+    $lastName = mysqli_real_escape_string($con, $_POST['lastName'] ?? '');
+    $emailAddress = mysqli_real_escape_string($con, $_POST['emailAddress'] ?? '');
+    $phoneNumber = mysqli_real_escape_string($con, $_POST['phoneNumber'] ?? '');
+    $dob = mysqli_real_escape_string($con, $_POST['dob'] ?? '');    
 
-    if (isset($postdata) && !empty($postdata)) {
-        $request = json_decode($postdata);
+    // Validate required fields
+    if ($contactID < 1 || firstName == '' || lastName == '' ||
+        emailAddress == '' || phoneNumber == '' ||
+        dob == '') {
 
-        // Validate required fields
-        if (trim($request->data->firstName) == '' || trim($request->data->lastName) == '' ||
-            trim($request->data->emailAddress) == '' || trim($request->data->phoneNumber) == '' ||
-            trim($request->data->dob) == '') {
+        http_response_code(400);
+        echo json_encode(['error' => 'missing required fields']);
+        exit;
+    }
+    
 
-            http_response_code(400);
-            echo json_encode(['message' => 'missing required fields']);
-            exit;
-        }        
+    // Check duplicate email excluding current contact
+    $checkEmailSql = "SELECT contactID FROM contacts WHERE emailAddress = '{$emailAddress}' AND contactID != $contactID LIMIT 1";
+    $checkEmailResult = mysqli_query($con, $checkEmailSql);
 
-        // Sanitize
-        $contactID = isset($_POST['contactID']) ? (int) $_POST['contactID'] : 0;
-        $firstName = mysqli_real_escape_string($con, trim($request->data->firstName));
-        $lastName = mysqli_real_escape_string($con, trim($request->data->lastName));
-        $emailAddress = mysqli_real_escape_string($con, trim($request->data->emailAddress));
-        $phoneNumber = mysqli_real_escape_string($con, trim($request->data->phoneNumber));
-        $dob = mysqli_real_escape_string($con, trim($request->data->dob));
-        $imageName = mysqli_real_escape_string($con, trim($request->data->imageName));
-
-        // Extract filename
-        $origimg = str_replace('\\', '/', $imageName);
-        $new = basename($origimg);
-        if (empty($new)) {
-            $new = 'placeholder_100.jpg';
-        }
-
-
-
-        // Check duplicate email
-        $checkEmailSql = "SELECT 1 FROM contacts WHERE emailAddress = '{$emailAddress}'";
-        $checkEmailResult = mysqli_query($con, $checkEmailSql);
-
-        if(mysqli_num_rows($checkEmailResult) > 0) {
-            http_response_code(409);
-            echo json_encode(['message' => 'Duplicate email address.']);
-            exit;
-        }
-
-        // Insert into database
-        $sql = "INSERT INTO `contacts`(`firstName`, `lastName`, `emailAddress`, `phoneNumber`, `dob`, `imageName`)
-            VALUES('{$firstName}', '{$lastName}', '{$emailAddress}', '{$phoneNumber}', '{$dob}', '{$new}')";
-
-        if (mysqli_query($con, $sql)) {
-            http_response_code(201);
-            echo json_encode([
-                'data' => [
-                    'contactID' => mysqli_insert_id($con),
-                    'firstName' => $firstName,
-                    'lastName' => $lastName,
-                    'emailAddress' => $emailAddress,
-                    'phoneNumber' => $phoneNumber,
-                    'dob' => $dob,
-                    'imageName' => $new
-                ]
-            ]);
-        }
-        else {
-            http_response_code(422);
-            echo json_encode(['message' => 'Database insert failed.']);
-        }
-
-
+    if(mysqli_num_rows($checkEmailResult) > 0) {
+        http_response_code(409);
+        echo json_encode(['message' => 'Duplicate email address.']);
+        exit;
     }
 
+    // Update contact
+    $sql = "UPDATE contacts SET
+        firstName = '$firstName',
+        lastName = '$lastName',
+        emailAddress = '$emailAddress',
+        phoneNumber = '$phoneNumber',
+        dob = '$dob'
+        wHERE contactID = $contactID LIMIT 1";
+
+    if (mysqli_query($con, $sql)) {
+        http_response_code(200);
+        echo json_encode(['message' => 'Contact updated successfully.']);
+    }
+    else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Database update failed.']);
+    }
+    
 ?>
