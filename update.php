@@ -15,9 +15,9 @@
     $dob = mysqli_real_escape_string($con, $_POST['dob'] ?? '');    
 
     // Validate required fields
-    if ($contactID < 1 || firstName == '' || lastName == '' ||
-        emailAddress == '' || phoneNumber == '' ||
-        dob == '') {
+    if ($contactID < 1 || $firstName == '' || $lastName == '' ||
+        $emailAddress == '' || $phoneNumber == '' ||
+        $dob == '') {
 
         http_response_code(400);
         echo json_encode(['error' => 'missing required fields']);
