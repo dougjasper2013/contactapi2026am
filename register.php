@@ -7,7 +7,7 @@
     error_reporting(E_ALL);
 
     // Get the posted data
-    $postdata = file_get_contents("php://input");
+    $postdata = json_decode(file_get_contents("php://input"));
 
     if (!isset($postdata->userName, $postdata->password, $postdata->emailAddress))
     {
@@ -33,6 +33,14 @@
     // Hash the password
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-    
+    $insert = $con->prepare("INSERT INTO registrations (userName, password, emailAddress) VALUES (?, ?, ?)");
+    $insert->bind_param("sss", $userName, $hashedPassword, $emailAddress);
+
+    if ($insert->execute()) {
+        echo json_encode(['success' => true, 'message' => 'User registered successfully.']);
+    }
+    else {
+        echo json_encode(['success' => false, 'message' => 'Error during registration.']);
+    }
 
 ?>
