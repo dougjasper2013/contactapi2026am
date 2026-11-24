@@ -34,7 +34,7 @@
         if ($failedAttempts >= 3 && (time() - $lastFailed) < $lockoutDuration) {
             $remaining = ceil(($lockoutDuration - (time() - $lastFailed)) / 60);
             http_response_code(403);
-            echo json_encode(['error' => 'Account locked. Try aagin in $remaining minute(s).']);
+            echo json_encode(['error' => "Account locked. Try aagin in $remaining minute(s)."]);
             exit;
         }
 
@@ -55,7 +55,7 @@
             mysqli_query($con, $update);
 
             // Calculate remaining attempts before lockout
-            $remaingAttempts = max(0, 3 - $failedAttempts);
+            $remainingAttempts = max(0, 3 - $failedAttempts);
 
             http_response_code(401);
             echo json_encode(['error' => 'Invalid userName or password',
